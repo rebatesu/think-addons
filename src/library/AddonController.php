@@ -39,18 +39,22 @@ class AddonController extends Controller
     /**
      * 架构函数
      *
-     * @param Request $request Request对象
+     * @param Request3 $request Request对象
      * @access public
      */
-    public function __construct(Request $request = null)
+    public function __construct($request = null)
     {
+
         // 生成request对象
         $this->request = is_null($request) ? request() : $request;
+
         // 初始化配置信息
         $this->config = config('template.') ?: $this->config;
+
         // 处理路由参数
         $route = $this->request->param('route', '');
         $param = explode('-', $route);
+
         // 是否自动转换控制器和操作名
         $convert = config('app.url_convert');
         // 格式化路由的插件位置
@@ -59,7 +63,7 @@ class AddonController extends Controller
         $this->addon      = $convert ? strtolower(array_pop($param)) : array_pop($param);
 
         // 生成view_path
-        $view_path = $this->config['view_path'] ?: 'view';
+        $view_path = $this->config['view_path'] ?'view': 'view';
 
         // 重置配置
         config('template.view_path', ADDON_PATH . $this->addon . DIRECTORY_SEPARATOR . $view_path . DIRECTORY_SEPARATOR);
@@ -80,17 +84,19 @@ class AddonController extends Controller
     protected function fetch($template = '', $vars = [], $replace = [], $config = [])
     {
         $controller = Loader::parseName($this->controller);
+
         if ('think' == strtolower($this->config['type']) && $controller && 0 !== strpos($template, '/')) {
             $depr     = $this->config['view_depr'];
+
             $template = str_replace(['/', ':'], $depr, $template);
             if ('' == $template) {
                 // 如果模板文件名为空 按照默认规则定位
                 $template = str_replace('.', DIRECTORY_SEPARATOR, $controller) . $depr . $this->action;
+
             } elseif (false === strpos($template, $depr)) {
                 $template = str_replace('.', DIRECTORY_SEPARATOR, $controller) . $depr . $template;
             }
         }
-
         return parent::fetch($template, $vars, $replace, $config);
     }
 }

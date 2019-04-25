@@ -12,11 +12,8 @@ use think\facade\Config;
 use think\facade\Cache;
 use think\facade\Route;
 
-// 插件目录
-define('ADDON_PATH', Env::get('root_path') . 'addons' . DIRECTORY_SEPARATOR);
-
 // 定义路由
-Route::any('addons/execute/:route', "\\myxland\\addons\\library\\Route@execute");
+Route::any('plugins/:route', "\\myxland\\addons\\library\\Route@execute");
 
 // 如果插件目录不存在则创建
 if (! is_dir(ADDON_PATH)) {
@@ -26,55 +23,9 @@ if (! is_dir(ADDON_PATH)) {
 // 注册类的根命名空间
 Loader::addNamespace('addons', ADDON_PATH);
 
-// 闭包自动识别插件目录配置
-Hook::add('app_init', function () {
-    // 获取开关
-    $autoload = (bool) Config::get('addons.autoload', false);
-    // 非正是返回
-    if (! $autoload) {
-        return;
-    }
-    // 当debug时不缓存配置
-    $config = config('app.app_debug') ? [] : Cache::get('addons', []);
-    if (empty($config)) {
-        // 读取addons的配置
-        $config = config('addons.');
-        // 读取插件目录及钩子列表
-        $base = get_class_methods("\\myxland\\Addons");
-        // 读取插件目录中的php文件
-        foreach (glob(ADDON_PATH . '*/*.php') as $addons_file) {
-            // 格式化路径信息
-            $info = pathinfo($addons_file);
-            // 获取插件目录名
-            $name = pathinfo($info['dirname'], PATHINFO_FILENAME);
-            // 找到插件入口文件
-            if (strtolower($info['filename']) == strtolower($name)) {
-                // 读取出所有公共方法
-                $methods = (array) get_class_methods("\\addons\\" . $name . "\\" . $info['filename']);
-                // 跟插件基类方法做比对，得到差异结果
-                $hooks = array_diff($methods, $base);
-                // 循环将钩子方法写入配置中
-                foreach ($hooks as $hook) {
-                    if (! isset($config['hooks'][$hook])) {
-                        $config['hooks'][$hook] = [];
-                    }
-                    // 兼容手动配置项
-                    if (is_string($config['hooks'][$hook])) {
-                        $config['hooks'][$hook] = explode(',', $config['hooks'][$hook]);
-                    }
-                    if (! in_array($name, $config['hooks'][$hook])) {
-                        $config['hooks'][$hook][] = $name;
-                    }
-                }
-            }
-        }
-        config($config, 'addons');
-    }
-    config($config, 'addons');
-});
 
 // 闭包初始化行为
-Hook::add('action_begin', function () {
+/*Hook::add('action_begin', function () {
     // 获取系统配置
     $data   = config('app.app_debug') ? [] : Cache::get('hooks', []);
     $addons = (array) config('addons.hooks');
@@ -93,7 +44,7 @@ Hook::add('action_begin', function () {
     } else {
         Hook::import($data, false);
     }
-});
+});*/
 
 /**
  * 处理插件钩子
@@ -104,7 +55,10 @@ Hook::add('action_begin', function () {
  */
 function hook($hook, $params = [])
 {
-    Hook::listen($hook, $params);
+    $result = Hook::listen($hook, $params);
+    if (count($result) > 0) {
+        return $result;
+    }
 }
 
 /**
@@ -182,6 +136,5 @@ function addon_url($url, $param = [], $suffix = true, $domain = false)
 
     // 生成插件链接新规则
     $actions = "{$addons}-{$controller}-{$action}";
-
-    return url("addons/execute/{$actions}", $param, $suffix, $domain);
+    return url("/plugins/{$actions}", $param, $suffix, $domain);
 }

@@ -1,8 +1,9 @@
 <?php
-
 namespace myxland\addons;
 
+use think\Container;
 use think\facade\View;
+
 
 /**
  * 插件基类
@@ -18,7 +19,7 @@ abstract class Addons
      * @var view
      * @access protected
      */
-    protected $view = null;
+    private $view = null;
 
     // 当前错误信息
     protected $error;
@@ -52,11 +53,17 @@ abstract class Addons
         if (is_file($this->addons_path . 'config.php')) {
             $this->config_file = $this->addons_path . 'config.php';
         }
+        $this->app = Container::get('app');
+        // 初始化视图模型
+        $config = ['view_path' => $this->addons_path];
 
         // 初始化视图模型
-        $config     = ['view_path' => $this->addons_path];
-        $config     = array_merge(config('template.'), $config);
-        $this->view = new View($config, config('template.tpl_replace_string'));
+        $template_config = \config('template.');
+        $config          = array_merge($template_config, $config);
+        $view            = new view();
+        $this->view      = $view::init(
+            $config
+        );
 
         // 控制器初始化
         if (method_exists($this, 'initialize')) {
@@ -82,10 +89,12 @@ abstract class Addons
         $map['name']   = $name;
         $map['status'] = 1;
         $config        = [];
+
         if (is_file($this->config_file)) {
             $temp_arr = include $this->config_file;
+
             foreach ($temp_arr as $key => $value) {
-                if ($value['type'] == 'group') {
+                if (isset($value['type']) && $value['type'] == 'group') {
                     foreach ($value['options'] as $gkey => $gvalue) {
                         foreach ($gvalue['options'] as $ikey => $ivalue) {
                             $config[$ikey] = $ivalue['value'];
@@ -123,7 +132,7 @@ abstract class Addons
     {
         $info_check_keys = ['name', 'title', 'description', 'status', 'author', 'version'];
         foreach ($info_check_keys as $value) {
-            if (! array_key_exists($value, $this->info)) {
+            if (!array_key_exists($value, $this->info)) {
                 return false;
             }
         }
@@ -144,13 +153,12 @@ abstract class Addons
      */
     public function fetch($template = '', $vars = [], $replace = [], $config = [])
     {
-        if (! is_file($template)) {
+        if (!is_file($template)) {
             $template = '/' . $template;
         }
         // 关闭模板布局
         $this->view->engine->layout(false);
-
-        echo $this->view->fetch($template, $vars, $replace, $config);
+        return $this->view->fetch($template, $vars, $replace, $config);
     }
 
     /**
@@ -215,4 +223,23 @@ abstract class Addons
 
     //必须卸载插件方法
     abstract public function uninstall();
+
+    //必须实现配置函数
+    abstract public function config();
+
+    //获取弹窗配置
+    public function getDialog()
+    {
+        $info = $this->info;
+        $dialog['width'] = $info['dialog_width']?$info['dialog_width']:'600px';
+        $dialog['height'] = $info['dialog_height']?$info['dialog_height']:'520px';
+        return $dialog;
+    }
+
+    //todo 临时这么处理，后期调整
+    function __destruct()
+    {
+        $this->view->engine(['view_path'=> '']);
+        // TODO: Implement __destruct() method.
+    }
 }
