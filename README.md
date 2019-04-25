@@ -1,9 +1,11 @@
 Thinkphp5.1 扩展Addon
 ======
+## 说明
+因项目框架原因，需要对该扩展进行修改，于是独立一份上传composer.
 
 ## 安装
 ~~~
-composer require myxland/think-addons
+composer require myxland2/think-addons
 php think addons:config
 ~~~
 

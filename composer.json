@@ -1,5 +1,5 @@
 {
-    "name": "myxland2/think-addons",
+    "name": "yosar/think-addons",
     "description": "Thinkphp 5.1 Addons Library",
     "type": "think-extend",
     "license": "Apache-2.0",
@@ -22,8 +22,5 @@
         "files": [
             "src/helper.php"
         ]
-    },
-    "post-install-cmd": [
-        "myxland\\wechat\\ComposerScripts::sendConfig"
-    ]
+    }
 }
