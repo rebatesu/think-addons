@@ -116,11 +116,18 @@ abstract class Addons
      *
      * @return string
      */
-    final public function getName()
+    /*final public function getName()
     {
         $data = explode('\\', get_class($this));
 
         return strtolower(array_pop($data));
+    }*/
+    final public function getName()
+    {
+        $data = explode('\\', get_class($this));
+        $class_name = array_pop($data);
+        //获取插件目录名字
+        return array_pop($data);
     }
 
     /**
