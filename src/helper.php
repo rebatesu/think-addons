@@ -71,7 +71,7 @@ function hook($hook, $params = [])
  */
 function get_addon_class($name, $type = 'hook', $class = null)
 {
-    $name = Loader::parseName($name);
+    $name = Loader::parseName($name,1);
     // 处理多级控制器情况
     if (! is_null($class) && strpos($class, '.')) {
         $class = explode('.', $class);
